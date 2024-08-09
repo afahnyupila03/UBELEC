@@ -75,10 +75,12 @@ export const Provider = ({ children }) => {
       const userCredentials = await createUserWithEmailAndPassword(
         auth,
         email,
-        password
+        password,
+        
       );
       await updateCurrentUser(userCredentials.user, {
         displayName: `${firstName} ${lastName}`,
+        
       });
       dispatch({
         type: CONSTANTS.SIGN_UP,

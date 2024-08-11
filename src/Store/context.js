@@ -1,12 +1,5 @@
-import React, { useEffect, useReducer } from "react";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  updateCurrentUser,
-  signOut,
-} from "firebase/auth";
-import { auth } from "../Configs/firebase";
+import React, { useEffect, useState, useReducer } from "react";
+import supabase, { auth } from "../Configs/supabase";
 
 const CONSTANTS = {
   SIGN_UP: "SIGN_UP",
@@ -18,7 +11,10 @@ const CONSTANTS = {
 
 export const Context = React.createContext();
 
-export const defaultAppState = {};
+export const defaultAppState = {
+  user: null,
+  error: null,
+};
 
 export const Reducer = (state, action) => {
   switch (action.type) {
@@ -53,39 +49,79 @@ export const Reducer = (state, action) => {
 
 export const Provider = ({ children }) => {
   const [state, dispatch] = useReducer(Reducer, defaultAppState);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    const onSubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("App Event: ", event);
+      console.log("App session: ", session);
+      if (
+        event === CONSTANTS.SIGN_IN ||
+        event === CONSTANTS.SIGN_UP ||
+        session
+      ) {
+        setSession(session);
         dispatch({
           type: CONSTANTS.SET_USER,
-          payload: { user },
+          payload: { user: session },
         });
-      } else {
-        dispatch({
-          type: CONSTANTS.SIGN_OUT,
-        });
+      } else if (event === CONSTANTS.SIGN_OUT) {
+        setSession(null);
+        dispatch({ type: CONSTANTS.SIGN_OUT });
       }
     });
-    return () => onSubscribe;
+    return () => {
+      data.subscription.unsubscribe();
+    };
   }, []);
 
-  const createUserHandler = async (email, password, firstName, lastName) => {
+  const createUserHandler = async (
+    email,
+    password,
+    firstName,
+    lastName,
+    role,
+    redirectLink,
+    phone
+  ) => {
     try {
-      const userCredentials = await createUserWithEmailAndPassword(
-        auth,
+      const { data, error } = await auth.signUp({
         email,
         password,
-        
-      );
-      await updateCurrentUser(userCredentials.user, {
-        displayName: `${firstName} ${lastName}`,
-        
+        role,
+        options: {
+          data: {
+            user: {
+              role,
+              phone,
+            },
+            phone,
+            identities: [{ identity_data: { email_verified: true } }],
+            firstName,
+            lastName,
+            role,
+            email_verified: true,
+            user_metadata: {
+              role,
+              email_verified: true,
+              phone_verified: true,
+              phone,
+            },
+            redirectTo: redirectLink,
+          },
+        },
       });
+
+      if (error) {
+        console.error("error creating user account: ", error);
+        throw error;
+      }
+
       dispatch({
         type: CONSTANTS.SIGN_UP,
-        payload: { user: userCredentials.user },
+        payload: { user: data.user },
       });
+      return { user: data.user };
     } catch (error) {
       console.error(error.message);
       dispatch({
@@ -96,17 +132,28 @@ export const Provider = ({ children }) => {
     }
   };
 
-  const signInUser = async (email, password) => {
+  const signInUser = async (email, password, redirectLink) => {
     try {
-      const userCredentials = await signInWithEmailAndPassword(
-        auth,
+      const { data, error } = await auth.signInWithPassword({
         email,
-        password
-      );
+        password,
+        options: {
+          data: {
+            redirectTo: redirectLink,
+          },
+        },
+      });
+
+      if (error) {
+        console.error("Error logging in to account: ", error);
+        throw error;
+      }
+
       dispatch({
         type: CONSTANTS.SIGN_IN,
-        payload: { user: userCredentials.user },
+        payload: { user: data.user },
       });
+      return { user: data.user };
     } catch (error) {
       console.error(error.message);
       dispatch({
@@ -119,7 +166,13 @@ export const Provider = ({ children }) => {
 
   const signOutUser = async () => {
     try {
-      await signOut();
+      const { error } = await auth.signOut();
+
+      if (error) {
+        console.error("Error logging out of account: ", error);
+        throw error;
+      }
+
       dispatch({
         type: CONSTANTS.SIGN_OUT,
       });
@@ -134,7 +187,7 @@ export const Provider = ({ children }) => {
   };
 
   const value = {
-    user: state.user,
+    user: session,
     error: state.error,
     signInUser,
     signOutUser,

@@ -8,7 +8,11 @@ export const routes = [
     element: <AuthenticationPage />,
   },
   {
-    path: "/dashboard",
+    path: "/admin/create-account-&-log-in",
+    element: <AuthenticationPage />,
+  },
+  {
+    path: "/student/dashboard",
     element: <DashboardPage />,
   },
   {

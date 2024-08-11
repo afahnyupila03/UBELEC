@@ -1,5 +1,6 @@
 import React from "react";
 import UserCard from "../../Components/UserCard";
+import { AppState } from "../../Store";
 
 const dummyVoted = [
   { userName: "Peter", campaignPosition: "President" },
@@ -9,6 +10,9 @@ const dummyVoted = [
 ];
 
 export default function DashboardPage() {
+  const { user } = AppState();
+  console.log("user state in app: ", user);
+
   return (
     <div>
       <div className="underline">

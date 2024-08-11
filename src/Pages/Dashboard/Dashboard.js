@@ -9,20 +9,34 @@ const dummyVoted = [
   { userName: "Peter", campaignPosition: "President" },
 ];
 
+const DashboardContent = (role) => {
+  if (role === "student") {
+    return (
+      <div>
+        <div>
+          <h3>Basic Information</h3>
+          <div>
+            <p>Name: </p>
+            <p>Email: </p>
+            <p>Phone number: </p>
+          </div>
+        </div>
+        <div>
+          <h3>School Program</h3>
+          <div>
+            <p>Faculty: </p>
+            <p>Department: </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+};
+
 export default function DashboardPage() {
   const { user } = AppState();
   console.log("user state in app: ", user);
+  const userRole = user?.user.user_metadata.role;
 
-  return (
-    <div>
-      <div className="underline">
-        <h1>Candidates You Voted For</h1>
-      </div>
-      <div className="flex">
-        {dummyVoted.map((candidate, index) => (
-          <UserCard key={index} candidateInformation={candidate} />
-        ))}
-      </div>
-    </div>
-  );
+  return <div>{DashboardContent(userRole)}</div>;
 }

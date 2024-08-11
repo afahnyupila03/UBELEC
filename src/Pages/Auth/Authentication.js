@@ -43,16 +43,16 @@ export default function AuthenticationPage() {
   const location = useLocation();
 
   const role =
-      location.pathname === "/admin/create-account-&-log-in"
-        ? "admin"
-        : "student";
-    const redirectTo =
-      role === "admin" ? "/admin/dashboard" : "/student/dashboard";
+    location.pathname === "/admin/create-account-&-log-in"
+      ? "admin"
+      : "student";
+  const redirectTo =
+    role === "admin" ? "/admin/dashboard" : "/student/dashboard";
 
   const createAccount = async (values, actions) => {
-    
     try {
-      const { user } = await createUserHandler(
+      // Create user via createUserHandler
+      const { user, error: createUserError } = await createUserHandler(
         values.email,
         values.password,
         values.firstName,
@@ -61,76 +61,90 @@ export default function AuthenticationPage() {
         redirectTo,
         values.phone
       );
+
+      if (createUserError || !user) {
+        throw new Error(createUserError?.message || "User creation failed");
+      }
+
+      const { id: userId } = user;
+
+      // Insert into FACULTY_TABLE and retrieve the inserted faculty_id
+      const { data: faculty, error: facultyError } = await supabase
+        .from("FACULTY_TABLE")
+        .insert({ faculty_name: values.faculty })
+        .select("faculty_id")
+        .single();
+
+      if (facultyError) {
+        throw new Error(
+          `Error writing to FACULTY_TABLE: ${facultyError.message}`
+        );
+      }
+
+      const faculty_id = faculty?.faculty_id;
+
+      // Define data to be inserted into DEPARTMENT_TABLE using the retrieved faculty_id
+      const departmentData = {
+        department_name: values.department,
+        faculty_id,
+      };
+
+      // Insert into DEPARTMENT_TABLE
+      const { data: department, error: departmentError } = await supabase
+        .from("DEPARTMENT_TABLE")
+        .insert([departmentData])
+        .select("department_id")
+        .single();
+
+      const department_id = department?.department_id;
+
+      if (departmentError) {
+        throw new Error(
+          `Error writing to DEPARTMENT_TABLE: ${departmentError.message}`
+        );
+      }
+
+      // Define data to be inserted into USER_TABLE
+      const studentData = {
+        user_id: userId,
+        first_name: values.firstName,
+        last_name: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        faculty_id,
+        department_id,
+      };
+
+      // Insert into USER_TABLE
+      const { error: userError } = await supabase
+        .from("USER_TABLE")
+        .insert([studentData]);
+
+      if (userError) {
+        throw new Error(`Error writing to USER_TABLE: ${userError.message}`);
+      }
+
+      // Reset form values
       actions.resetForm({
         values: {
           email: "",
           firstName: "",
           lastName: "",
           password: "",
+          department: "",
+          faculty: "",
+          phone: "",
         },
       });
 
-      const { id } = user;
-      console.log("Authentication page user: ", user);
-
-      try {
-        const studentData = {
-          user_id: id,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          email: values.email,
-        };
-        const facultyInfor = {
-          faculty_name: values.faculty,
-        };
-        const departmentInfor = {
-          department_name: values.department,
-        };
-
-        if (role === "admin") {
-          const { error } = await supabase.from().insert();
-          if (error) {
-            console.error("Error writing to admin tables: ", error.message);
-            throw error.message;
-          } else {
-            const { error: userError } = await supabase
-              .from("USER_TABLE")
-              .insert(studentData);
-            const { error: facultyError } = await supabase
-              .from("FACULTY_TABLE")
-              .insert(facultyInfor);
-            const { error: departmentError } = await supabase
-              .from("DEPARTMENT_TABLE")
-              .insert(departmentInfor);
-            if (userError) {
-              console.error("Error writing to USER_TABLE: ", userError.message);
-            } else if (facultyError) {
-              console.error("Error writing to FACULTY_TABLE: ", facultyError);
-            } else if (departmentError) {
-              console.error(
-                "Error writing to DEPARTMENT_TABLE: ",
-                departmentError
-              );
-            }
-          }
-        }
-
-        alert(
-          "Success writing to USER_TABLE, FACULTY_TABLE and DEPARTMENT_TABLE "
-        );
-      } catch (error) {
-        console.error("Error adding to user table: ", error.message);
-        alert(error.message);
-        throw error;
-      }
-      console.log("submitted values: ", values);
-      alert("Success creating account");
+      alert("Account created successfully and data inserted into the database");
       navigate(redirectTo, { replace: true });
     } catch (error) {
-      console.error(error.message);
-      alert(error.message);
+      console.error("Error in createAccount:", error.message);
+      alert(`Error: ${error.message}`);
     }
   };
+
   const loginAccount = async (values, actions) => {
     try {
       await signInUser(values.email, values.password);
@@ -161,7 +175,7 @@ export default function AuthenticationPage() {
                   lastName: "",
                   department: "",
                   faculty: selectedFaculty,
-                  phone: ""
+                  phone: "",
                 }
               : {
                   email: "",

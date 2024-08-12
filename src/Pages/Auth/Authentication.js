@@ -2,7 +2,7 @@ import { Field, Form, Formik } from "formik";
 import React, { useState } from "react";
 import { AppState } from "../../Store";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SchoolPrograms } from "./Components/Constants";
+import { SchoolPrograms } from "../../Constants/index";
 import supabase from "../../Configs/supabase";
 
 const signUpErrorMessage = ({ error }) => {
@@ -68,42 +68,6 @@ export default function AuthenticationPage() {
 
       const { id: userId } = user;
 
-      // Insert into FACULTY_TABLE and retrieve the inserted faculty_id
-      const { data: faculty, error: facultyError } = await supabase
-        .from("FACULTY_TABLE")
-        .insert({ faculty_name: values.faculty })
-        .select("faculty_id")
-        .single();
-
-      if (facultyError) {
-        throw new Error(
-          `Error writing to FACULTY_TABLE: ${facultyError.message}`
-        );
-      }
-
-      const faculty_id = faculty?.faculty_id;
-
-      // Define data to be inserted into DEPARTMENT_TABLE using the retrieved faculty_id
-      const departmentData = {
-        department_name: values.department,
-        faculty_id,
-      };
-
-      // Insert into DEPARTMENT_TABLE
-      const { data: department, error: departmentError } = await supabase
-        .from("DEPARTMENT_TABLE")
-        .insert([departmentData])
-        .select("department_id")
-        .single();
-
-      const department_id = department?.department_id;
-
-      if (departmentError) {
-        throw new Error(
-          `Error writing to DEPARTMENT_TABLE: ${departmentError.message}`
-        );
-      }
-
       // Define data to be inserted into USER_TABLE
       const studentData = {
         user_id: userId,
@@ -111,17 +75,38 @@ export default function AuthenticationPage() {
         last_name: values.lastName,
         email: values.email,
         phone: values.phone,
-        faculty_id,
-        department_id,
+        faculty_name: values.faculty,
+        department_name: values.department,
       };
 
-      // Insert into USER_TABLE
-      const { error: userError } = await supabase
-        .from("USER_TABLE")
-        .insert([studentData]);
+      const adminData = {
+        admin_id: userId,
+        first_name: values.firstName,
+        last_name: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        faculty_name: values.faculty,
+        department_name: values.department,
+      };
 
-      if (userError) {
-        throw new Error(`Error writing to USER_TABLE: ${userError.message}`);
+      if (role === "admin") {
+        const { error: adminError } = await supabase
+          .from("ADMIN_TABLE")
+          .insert([adminData]);
+        if (adminError) {
+          throw new Error(
+            `Error writing to ADMIN_TABLE: ${adminError.message}`
+          );
+        }
+      } else {
+        // Insert into USER_TABLE
+        const { error: userError } = await supabase
+          .from("USER_TABLE")
+          .insert([studentData]);
+
+        if (userError) {
+          throw new Error(`Error writing to USER_TABLE: ${userError.message}`);
+        }
       }
 
       // Reset form values
@@ -235,8 +220,8 @@ export default function AuthenticationPage() {
                     as="select"
                     onChange={(e) => {
                       const selected = e.target.value;
-                      handleChange(e); // This updates Formik's state
-                      setSelectedFaculty(selected); // This updates the local state for departments
+                      handleChange(e);
+                      setSelectedFaculty(selected);
                     }}
                     onBlur={handleBlur}
                     value={values.faculty}

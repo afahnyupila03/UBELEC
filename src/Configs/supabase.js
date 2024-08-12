@@ -6,6 +6,7 @@ const API_KEY =
 
 const supabase = createClient(PROJECT_URL, API_KEY);
 
+// For regular user authentication
 export const auth = supabase.auth;
 
 export default supabase;

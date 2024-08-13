@@ -3,33 +3,133 @@ import { AppState } from "../../Store";
 import supabase from "../../Configs/supabase";
 import { useState } from "react";
 import { Positions, SchoolPrograms } from "../../Constants";
+import { useQuery } from "react-query";
+import { fetchCandidateProfiles } from "../../Services/CandidateService";
 
 export default function CandidatePage() {
   const { user } = AppState();
 
+  const { data: candidateProfiles, refetch } = useQuery(
+    "candidate_profiles",
+    fetchCandidateProfiles
+  );
+
   const userRole = user?.user.user_metadata.role;
 
   const [selectedFaculty, setSelectedFaculty] = useState("");
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedPosition, setSelectedPosition] = useState("");
+
   const facultyToDepartments = SchoolPrograms.reduce((acc, school) => {
     acc[school.faculty] = school.departments;
     return acc;
   }, {});
 
+  const filteredCandidates = candidateProfiles?.filter((candidate) => {
+    return (
+      (selectedFaculty === "" ||
+        candidate.candidateFaculty === selectedFaculty) &&
+      (selectedDepartment === "" ||
+        candidate.candidateDepartment === selectedDepartment) &&
+      (selectedPosition === "" ||
+        candidate.candidatePosition === selectedPosition)
+    );
+  });
+
   const addCandidateHandler = async (values, actions) => {
+    const candidateData = {
+      candidate_name: values.candidateName,
+      candidate_faculty: values.candidateFaculty,
+      candidate_department: values.candidateDepartment,
+      candidate_position: values.candidatePosition,
+    };
+
     try {
-      const candidateData = {
-        candidate_name: values.candidateName,
-        candidate_faculty: values.candidateFaculty,
-        candidate_department: values.candidateDepartment,
-        candidate_position: values.candidatePosition,
-      };
-      const { error } = await supabase
+      const { data, error } = await supabase
+        .from("CANDIDATE_TABLE")
+        .select("*")
+        .eq("candidate_name", candidateData.candidate_name);
+
+      if (error) {
+        console.error("Error fetching candidates:", error);
+        alert(`Error fetching candidates: ${error.message}`);
+        return;
+      }
+
+      // Check if the candidate name already exists
+      const existingCandidate = data.find(
+        (candidate) => candidate.candidate_name === candidateData.candidate_name
+      );
+
+      if (existingCandidate) {
+        // Check for faculty conflict
+        if (
+          existingCandidate.candidate_faculty !==
+          candidateData.candidate_faculty
+        ) {
+          alert(
+            `Conflict: ${candidateData.candidate_name} already exists in ${existingCandidate.candidate_faculty}. Cannot add to ${candidateData.candidate_faculty}.`
+          );
+          return;
+        }
+
+        // Check for department conflict
+        if (
+          existingCandidate.candidate_department !==
+          candidateData.candidate_department
+        ) {
+          alert(
+            `Conflict: ${candidateData.candidate_name} already exists in ${existingCandidate.candidate_department}. Cannot add to ${candidateData.candidate_department}.`
+          );
+          return;
+        }
+
+        // Check if position matches
+        if (
+          existingCandidate.candidate_position ===
+          candidateData.candidate_position
+        ) {
+          alert(
+            `Error: ${candidateData.candidate_name} already exists for the position of ${candidateData.candidate_position}.`
+          );
+          return;
+        }
+      }
+
+      // Insert the new candidate if all checks pass
+      const { error: insertError } = await supabase
         .from("CANDIDATE_TABLE")
         .insert([candidateData]);
-      if (error) throw new Error(`Error writing to CANDIDATE_TABLE: ${error}`);
+
+      if (insertError) {
+        console.error(
+          `Error writing to CANDIDATE_TABLE: ${insertError.message}`
+        );
+        alert(`Error adding candidate: ${insertError.message}`);
+        return;
+      }
+
+      console.log("Success adding candidate to system");
+      alert(`Candidate ${values.candidateName} successfully added.`);
+
+      refetch();
     } catch (error) {
-      console.log("Error adding candidate to system: ", error);
-      throw new Error(`Error adding candidate to database: ${error.message}`);
+      console.error("Error adding candidate to system:", error);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  const deleteCandidateHandler = async (candidateId) => {
+    try {
+      await supabase
+        .from("CANDIDATE_TABLE")
+        .delete()
+        .eq("candidate_id", candidateId)
+        .select();
+      alert(`Success deleting candidate from system`);
+    } catch (error) {
+      console.error(`Error deleting candidate from system: ${error}`);
+      throw new Error(`Error deleting candidate from system: ${error}`);
     }
   };
 
@@ -147,37 +247,23 @@ export default function CandidatePage() {
             </div>
 
             <div>
-              <h1>President</h1>
               <div>
-                <p>Render Presidential Candidates</p>
-              </div>
-            </div>
-
-            <div>
-              <h1>Vice President</h1>
-              <div>
-                <p>Render Vice President Candidates</p>
-              </div>
-            </div>
-
-            <div>
-              <h1>Secretary</h1>
-              <div>
-                <p>Render Secretarial Candidates</p>
-              </div>
-            </div>
-
-            <div>
-              <h1>Vice Secretary</h1>
-              <div>
-                <p>Render Vice Secretarial Candidates</p>
-              </div>
-            </div>
-
-            <div>
-              <h1>Public Relations Officer</h1>
-              <div>
-                <p>Render Public Relations Officer Candidates</p>
+                {candidateProfiles?.map((candidate) => (
+                  <div key={candidate.candidateId}>
+                    <p>Candidate Name: {candidate.candidateName}</p>
+                    <p>Candidate Faculty: {candidate.candidateFaculty}</p>
+                    <p>Candidate Department: {candidate.candidateDepartment}</p>
+                    <p>Campaign Position: {candidate.candidatePosition}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        deleteCandidateHandler(candidate.candidateId)
+                      }
+                    >
+                      Delete Candidate
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

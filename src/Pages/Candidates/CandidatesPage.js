@@ -17,24 +17,13 @@ export default function CandidatePage() {
   const userRole = user?.user.user_metadata.role;
 
   const [selectedFaculty, setSelectedFaculty] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [selectedPosition, setSelectedPosition] = useState("");
+  const [filteredFaculty, setFilteredFaculty] = useState("");
+  const [filteredDepartment, setFilteredDepartment] = useState("");
 
   const facultyToDepartments = SchoolPrograms.reduce((acc, school) => {
     acc[school.faculty] = school.departments;
     return acc;
   }, {});
-
-  const filteredCandidates = candidateProfiles?.filter((candidate) => {
-    return (
-      (selectedFaculty === "" ||
-        candidate.candidateFaculty === selectedFaculty) &&
-      (selectedDepartment === "" ||
-        candidate.candidateDepartment === selectedDepartment) &&
-      (selectedPosition === "" ||
-        candidate.candidatePosition === selectedPosition)
-    );
-  });
 
   const addCandidateHandler = async (values, actions) => {
     const candidateData = {
@@ -124,9 +113,10 @@ export default function CandidatePage() {
       await supabase
         .from("CANDIDATE_TABLE")
         .delete()
-        .eq("candidate_id", candidateId)
-        .select();
+        .eq("candidate_id", candidateId);
+
       alert(`Success deleting candidate from system`);
+      refetch();
     } catch (error) {
       console.error(`Error deleting candidate from system: ${error}`);
       throw new Error(`Error deleting candidate from system: ${error}`);
@@ -243,30 +233,82 @@ export default function CandidatePage() {
 
           <div>
             <div>
-              <h1>Candidate By Position</h1>
+              <h1>View Candidates by Positions</h1>
             </div>
-
             <div>
-              <div>
-                {candidateProfiles?.map((candidate) => (
-                  <div key={candidate.candidateId}>
-                    <p>Candidate Name: {candidate.candidateName}</p>
-                    <p>Candidate Faculty: {candidate.candidateFaculty}</p>
-                    <p>Candidate Department: {candidate.candidateDepartment}</p>
-                    <p>Campaign Position: {candidate.candidatePosition}</p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        deleteCandidateHandler(candidate.candidateId)
-                      }
-                    >
-                      Delete Candidate
-                    </button>
-                  </div>
+              {/* Faculty Filter Dropdown */}
+              <select
+                value={filteredFaculty}
+                onChange={(e) => {
+                  setFilteredFaculty(e.target.value);
+                  setFilteredDepartment(""); // Reset department when faculty changes
+                }}
+              >
+                <option value="">All Faculties</option>
+                {Object.keys(facultyToDepartments).map((faculty) => (
+                  <option key={faculty} value={faculty}>
+                    {faculty}
+                  </option>
                 ))}
-              </div>
+              </select>
+
+              {/* Department Filter Dropdown */}
+              <select
+                value={filteredDepartment}
+                onChange={(e) => setFilteredDepartment(e.target.value)}
+                disabled={!filteredFaculty} // Disable if no faculty is selected
+              >
+                <option value="">All Departments</option>
+                {filteredFaculty &&
+                  facultyToDepartments[filteredFaculty].map((department) => (
+                    <option key={department} value={department}>
+                      {department}
+                    </option>
+                  ))}
+              </select>
             </div>
           </div>
+
+          {Positions.map((position) => {
+            const candidatePositions = candidateProfiles?.filter(
+              (candidate) =>
+                candidate.candidatePosition === position &&
+                (filteredFaculty === "" ||
+                  candidate.candidateFaculty === filteredFaculty) &&
+                (filteredDepartment === "" ||
+                  candidate.candidateDepartment === filteredDepartment)
+            );
+
+            return (
+              <div key={position}>
+                <h1>{position}</h1>
+
+                {/* Display Candidates */}
+                {candidatePositions?.length > 0 ? (
+                  candidatePositions.map((candidate) => (
+                    <div key={candidate.candidateId}>
+                      <p>Candidate Name: {candidate.candidateName}</p>
+                      <p>Candidate Faculty: {candidate.candidateFaculty}</p>
+                      <p>
+                        Candidate Department: {candidate.candidateDepartment}
+                      </p>
+                      <p>Campaign Position: {candidate.candidatePosition}</p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deleteCandidateHandler(candidate.candidateId)
+                        }
+                      >
+                        Delete Candidate
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p>No candidates found for {position}</p>
+                )}
+              </div>
+            );
+          })}
         </div>
       );
     }

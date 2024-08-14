@@ -1,3 +1,4 @@
+/* eslint-disable no-lone-blocks */
 import { Field, Form, Formik } from "formik";
 import { AppState } from "../../Store";
 import supabase from "../../Configs/supabase";
@@ -5,16 +6,27 @@ import { useState } from "react";
 import { Positions, SchoolPrograms } from "../../Constants";
 import { useQuery } from "react-query";
 import { fetchCandidateProfiles } from "../../Services/CandidateService";
+import { fetchUserProfile } from "../../Services/UserService";
 
 export default function CandidatePage() {
   const { user } = AppState();
+  const userRole = user?.user.user_metadata.role;
+  const userId = user?.user.id;
 
   const { data: candidateProfiles, refetch } = useQuery(
     "candidate_profiles",
     fetchCandidateProfiles
   );
-
-  const userRole = user?.user.user_metadata.role;
+  const { data: studentProfile } = useQuery(
+    ["student_profile", userId, userRole],
+    () => {
+      if (userRole === "student") {
+        return fetchUserProfile(userId);
+      }
+      return;
+    },
+    { enabled: !!userId }
+  );
 
   const [selectedFaculty, setSelectedFaculty] = useState("");
   const [filteredFaculty, setFilteredFaculty] = useState("");
@@ -24,6 +36,72 @@ export default function CandidatePage() {
     acc[school.faculty] = school.departments;
     return acc;
   }, {});
+
+  const studentName = studentProfile?.name;
+  const studentFaculty = studentProfile?.faculty;
+  const studentDepartment = studentProfile?.department;
+
+  /* Renders candidates to students
+   based on student Faculty and Department */
+  const renderStudentCandidateBySchoolProgram = () => {
+    {
+      Positions.map((position) => {
+        const candidatePositions = candidateProfiles?.filter(
+          (candidate) =>
+            candidate.candidatePosition === position &&
+            filteredFaculty === studentFaculty &&
+            filteredDepartment === studentDepartment
+        );
+        return (
+          <div key={position}>
+            <h1>{position}</h1>
+            {candidatePositions?.length > 0 ? (
+              candidateProfiles?.map((candidate) => {
+                if (
+                  candidate.candidateDepartment === studentDepartment &&
+                  candidate.candidateFaculty === studentFaculty
+                ) {
+                  return (
+                    <div key={candidate.candidateId}>
+                      <div>
+                        <p>Candidate Name: {candidate.candidateName}</p>
+                        <p>Candidate Faculty: {candidate.candidateFaculty}</p>
+                        <p>
+                          Candidate Department: {candidate.candidateDepartment}
+                        </p>
+                      </div>
+                      <hr />
+                      <div>
+                        <p>Campaign Position: {candidate.candidatePosition}</p>
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            console.log(
+                              `You ${studentName}, voted for 
+                            ${candidate.candidateName} 
+                            from the ${candidate.candidateFaculty} 
+                            under ${candidate.candidateDepartment} 
+                            for the position of ${candidate.candidatePosition}`
+                            )
+                          }
+                        >
+                          Vote
+                        </button>
+                      </div>
+                    </div>
+                  );
+                } else return <p>No to vote for in system. try again later</p>;
+              })
+            ) : (
+              <p>No candidate in system for position of {position} </p>
+            )}
+          </div>
+        );
+      });
+    }
+  };
 
   const addCandidateHandler = async (values, actions) => {
     const candidateData = {
@@ -123,15 +201,15 @@ export default function CandidatePage() {
     }
   };
 
+  const candidateVoteHandler = async () => {};
+
   const renderCandidateContent = () => {
     if (userRole === "student") {
       return (
         <div>
           <div>
             <h1>Vote Candidate by Position</h1>
-            <div></div>
-            <div></div>
-            <div></div>
+            {renderStudentCandidateBySchoolProgram()}
           </div>
         </div>
       );

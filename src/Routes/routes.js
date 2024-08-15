@@ -16,6 +16,10 @@ export const routes = [
     element: <DashboardPage />,
   },
   {
+    path: "/admin/dashboard",
+    element: <DashboardPage />,
+  },
+  {
     path: "/candidates",
     element: <CandidatePage />,
   },

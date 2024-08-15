@@ -1,9 +1,10 @@
-import React, { Suspense, useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect, StrictMode } from "react";
 import "./App.css";
 import { useNavigate, useRoutes } from "react-router-dom";
 import { AppRoutes } from "./Routes";
 import NavbarComponent from "./Pages/Home/Layout/Navbar";
 import { AppState } from "./Store";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 const FALLBACK = () => {
   return (
@@ -23,7 +24,7 @@ function App() {
   const { user } = AppState();
   const userRole = user?.user.user_metadata.role;
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (user !== null) {
       if (userRole === "student") {
         setCheckUser(false);
@@ -36,14 +37,18 @@ function App() {
       setCheckUser(false);
       navigate("/create-account-&-log-in", { replace: true });
     }
-  }, [user, userRole, navigate]);
+  }, [user, userRole, navigate]); */
 
   return (
-    <Suspense fallback={checkUser && <FALLBACK />}>
-      <div className="App">
-        <NavbarComponent />
-        {appNav}
-      </div>
+    <Suspense fallback=<FALLBACK />>
+      <QueryClientProvider client={new QueryClient()}>
+        <StrictMode>
+          <div className="App">
+            <NavbarComponent />
+            {appNav}
+          </div>
+        </StrictMode>
+      </QueryClientProvider>
     </Suspense>
   );
 }

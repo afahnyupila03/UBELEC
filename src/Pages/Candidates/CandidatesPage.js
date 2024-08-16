@@ -9,6 +9,7 @@ import { fetchCandidateProfiles } from "../../Services/CandidateService";
 import { fetchUserProfile } from "../../Services/UserService";
 import StudentCandidateCard from "./Components/StudentCandidateCard";
 import AdminCandidateCard from "./Components/AdminCandidateCard";
+import { Blockquote } from "flowbite-react";
 
 export default function CandidatePage() {
   const { user } = AppState();
@@ -205,21 +206,25 @@ export default function CandidatePage() {
 
       return (
         <div key={position}>
-          <h1>{position}</h1>
+          <Blockquote className="text-xl font-sans">{position}</Blockquote>
           {candidatePositions?.length > 0 ? (
-            candidatePositions.map((candidate) => (
-              <StudentCandidateCard
-                key={candidate.candidateId}
-                voteHandler={() =>
-                  voteCandidateHandler(candidate.candidateId, position)
-                }
-                isVoted={votedPositions[position] === candidate.candidateId}
-                isDisabled={votedPositions[position] !== undefined}
-                candidateData={candidate}
-              />
-            ))
+            <div className="grid grid-cols-4 gap-4">
+              {candidatePositions.map((candidate) => (
+                <StudentCandidateCard
+                  key={candidate.candidateId}
+                  voteHandler={() =>
+                    voteCandidateHandler(candidate.candidateId, position)
+                  }
+                  isVoted={votedPositions[position] === candidate.candidateId}
+                  isDisabled={votedPositions[position] !== undefined}
+                  candidateData={candidate}
+                />
+              ))}
+            </div>
           ) : (
-            <p>No candidates found for the position of {position}</p>
+            <Blockquote className="text-xl font-sans py-2">
+              No candidates found for the position of {position}
+            </Blockquote>
           )}
         </div>
       );
@@ -330,7 +335,9 @@ export default function CandidatePage() {
       <Fragment>
         <div>
           <div>
-            <h1>View Candidates by Positions</h1>
+            <Blockquote className="text-xl font-sans">
+              View Candidates by Positions
+            </Blockquote>
           </div>
           <div>
             {/* Faculty Filter Dropdown */}
@@ -422,5 +429,9 @@ export default function CandidatePage() {
     }
   };
 
-  return <div>{renderCandidateContent()}</div>;
+  return (
+    <div className="mx-auto my-10 px-10 container">
+      {renderCandidateContent()}
+    </div>
+  );
 }

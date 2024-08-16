@@ -48,21 +48,21 @@ export const AdminVotesServices = async () => {
     const { data: adminVotes, error: adminError } = await supabase.from(
       "VOTE_TABLE"
     ).select(`
-            vote_id,
-            user_id,
-            vote_type,
-            vote_date,
-            candidate_id,
-            CANDIDATE_TABLE (
-              candidate_name,
-              candidate_faculty,
-              candidate_department,
-              candidate_position
-            )
-          `);
+          vote_id,
+          user_id,
+          vote_type,
+          vote_date,
+          candidate_id,
+          CANDIDATE_TABLE (
+            candidate_name,
+            candidate_faculty,
+            candidate_department,
+            candidate_position
+          )
+        `);
 
     if (adminError) {
-      console.error("Error fetching all votes:", adminError);
+      console.error(`Error fetching all votes: ${adminError.message}`);
       throw new Error(`Error fetching all votes: ${adminError.message}`);
     }
 
@@ -99,7 +99,7 @@ export const AdminVotesServices = async () => {
         voteCount: voteCounts[candidateId].voteCount,
       };
     });
-    console.log("admin vote service: ", allVotes);
+
     return allVotes;
   } catch (error) {
     console.error("Error fetching all votes: ", error);

@@ -5,13 +5,15 @@ import { AppRoutes } from "./Routes";
 import NavbarComponent from "./Pages/Home/Layout/Navbar";
 import { AppState } from "./Store";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { Blockquote, Spinner } from "flowbite-react";
 
 const FALLBACK = () => {
   return (
-    <div>
-      <div>
-        <p>Loading...</p>
-      </div>
+    <div className="flex justify-center items-center">
+      <Spinner
+        className="mx-auto py-10 my-10 px-10 container flex justify-center"
+        aria-label={`Loading vote information`}
+      />
     </div>
   );
 };
@@ -45,6 +47,11 @@ function App() {
         <StrictMode>
           <NavbarComponent />
           {appNav}
+          <div className="my-4 py-2 flex justify-center">
+            <Blockquote className="text-center text-lg font-sans font-normal">
+              &copy; {new Date().getFullYear()}
+            </Blockquote>
+          </div>
         </StrictMode>
       </QueryClientProvider>
     </Suspense>

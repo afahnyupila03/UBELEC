@@ -20,11 +20,11 @@ const navigation = (role) => [
 export default function NavbarComponent() {
   const { signOutUser, user } = AppState();
 
-  const role = user?.user.user_metadata.role;
+  const role = user?.user?.user_metadata.role;
   const navigate = useNavigate();
 
-  const firstName = user?.user.user_metadata.firstName;
-  const lastName = user?.user.user_metadata.lastName;
+  const firstName = user?.user?.user_metadata.firstName;
+  const lastName = user?.user?.user_metadata.lastName;
 
   const handleSignOut = () => {
     signOutUser();
@@ -37,47 +37,43 @@ export default function NavbarComponent() {
 
   return (
     <Navbar fluid rounded>
-      <Navbar.Brand>
-        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
-          UBEVOTE
-        </span>
-      </Navbar.Brand>
-      <div className="flex md:order-2">
-        <Dropdown
-          arrowIcon={false}
-          inline
-          label={
-            <Avatar
-              rounded
-            />
-          }
-        >
-          <Dropdown.Header>
-            <span className="block text-sm">
-              {`${firstName} ${lastName}`}
+      {user?.user && (
+        <>
+          <Navbar.Brand>
+            <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
+              UBEVOTE
             </span>
-            <span className="block truncate text-sm font-medium">
-              {user?.user.email}
-            </span>
-          </Dropdown.Header>
-          <Dropdown.Item onClick={handleSignOut}>Sign out</Dropdown.Item>
-        </Dropdown>
-        <Navbar.Toggle />
-      </div>
-      <Navbar.Collapse>
-        {navigation(role)?.map((link, index) => (
-          <NavLink
-            key={index}
-            to={link.path}
-            className={({ isActive }) =>
-              isActive ? "text-blue-700 text-lg" : "text-gray-900 text-lg"
-            }
-            end 
-          >
-            {link.link}
-          </NavLink>
-        ))}
-      </Navbar.Collapse>
+          </Navbar.Brand>
+          <div className="flex md:order-2">
+            <Dropdown arrowIcon={false} inline label={<Avatar rounded />}>
+              <Dropdown.Header>
+                <span className="block text-sm">
+                  {`${firstName} ${lastName}`}
+                </span>
+                <span className="block truncate text-sm font-medium">
+                  {user?.user.email}
+                </span>
+              </Dropdown.Header>
+              <Dropdown.Item onClick={handleSignOut}>Sign out</Dropdown.Item>
+            </Dropdown>
+            <Navbar.Toggle />
+          </div>
+          <Navbar.Collapse>
+            {navigation(role)?.map((link, index) => (
+              <NavLink
+                key={index}
+                to={link.path}
+                className={({ isActive }) =>
+                  isActive ? "text-blue-700 text-lg" : "text-gray-900 text-lg"
+                }
+                end
+              >
+                {link.link}
+              </NavLink>
+            ))}
+          </Navbar.Collapse>
+        </>
+      )}
     </Navbar>
   );
 }

@@ -5,25 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { SchoolPrograms } from "../../Constants/index";
 import supabase from "../../Configs/supabase";
 
-const signUpErrorMessage = ({ error }) => {
-  return (
-    <>
-      {alert(error.message)}
-      <p>{error.message}</p>
-      <p>Please try again</p>
-    </>
-  );
-};
-
-const SignInErrorMessage = ({ error }) => {
-  return (
-    <>
-      {alert(error.message)}
-      <p>Error signing into account</p>
-      <p>Please try again</p>
-    </>
-  );
-};
+import FormField from "../../Components/TextInput";
 
 export default function AuthenticationPage() {
   const { createUserHandler, signInUser, user } = AppState();
@@ -51,7 +33,6 @@ export default function AuthenticationPage() {
 
   const createAccount = async (values, actions) => {
     try {
-      // Create user via createUserHandler
       const { user, error: createUserError } = await createUserHandler(
         values.email,
         values.password,
@@ -68,7 +49,6 @@ export default function AuthenticationPage() {
 
       const { id: userId } = user;
 
-      // Define data to be inserted into USER_TABLE
       const studentData = {
         user_id: userId,
         first_name: values.firstName,
@@ -99,7 +79,6 @@ export default function AuthenticationPage() {
           );
         }
       } else {
-        // Insert into USER_TABLE
         const { error: userError } = await supabase
           .from("USER_TABLE")
           .insert([studentData]);
@@ -109,7 +88,6 @@ export default function AuthenticationPage() {
         }
       }
 
-      // Reset form values
       actions.resetForm({
         values: {
           email: "",
@@ -147,9 +125,11 @@ export default function AuthenticationPage() {
   };
 
   return (
-    <div>
-      <div>
-        <h1>{newUser ? "Create Account" : "Login"}</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-8">
+        <h1 className="text-2xl font-semibold text-center mb-6">
+          {newUser ? "Create Account" : "Login"}
+        </h1>
         <Formik
           initialValues={
             newUser
@@ -171,7 +151,7 @@ export default function AuthenticationPage() {
         >
           {({ values, handleChange, handleBlur, isSubmitting }) => (
             <Form>
-              <Field
+              <FormField
                 type="email"
                 id="email"
                 name="email"
@@ -183,7 +163,7 @@ export default function AuthenticationPage() {
               />
               {newUser && (
                 <>
-                  <Field
+                  <FormField
                     type="text"
                     id="firstName"
                     name="firstName"
@@ -193,7 +173,7 @@ export default function AuthenticationPage() {
                     placeholder="Enter First Name"
                     label="Enter First Name"
                   />
-                  <Field
+                  <FormField
                     type="text"
                     id="lastName"
                     name="lastName"
@@ -203,7 +183,7 @@ export default function AuthenticationPage() {
                     placeholder="Enter Last Name"
                     label="Enter Last Name"
                   />
-                  <Field
+                  <FormField
                     type="tel"
                     id="phone"
                     name="phone"
@@ -213,45 +193,51 @@ export default function AuthenticationPage() {
                     placeholder="Enter Phone Number"
                     label="Enter Phone Number"
                   />
-                  <Field
-                    type="text"
-                    id="faculty"
-                    name="faculty"
-                    as="select"
-                    onChange={(e) => {
-                      const selected = e.target.value;
-                      handleChange(e);
-                      setSelectedFaculty(selected);
-                    }}
-                    onBlur={handleBlur}
-                    value={values.faculty}
-                  >
-                    <option value="select">Select Faculty</option>
-                    {SchoolPrograms.map((school, index) => (
-                      <option value={school.faculty} key={index}>
-                        {school.faculty}
-                      </option>
-                    ))}
-                  </Field>
-                  <Field
-                    type="text"
-                    id="department"
-                    name="department"
-                    as="select"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.department}
-                  >
-                    <option value="select">Select Department</option>
-                    {selectedFaculty &&
-                      facultyToDepartments[selectedFaculty].map(
-                        (department, index) => (
-                          <option value={department} key={index}>
-                            {department}
-                          </option>
-                        )
-                      )}
-                  </Field>
+                  <div className="mb-4">
+                    <Field
+                      type="text"
+                      id="faculty"
+                      name="faculty"
+                      as="select"
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        handleChange(e);
+                        setSelectedFaculty(selected);
+                      }}
+                      onBlur={handleBlur}
+                      value={values.faculty}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    >
+                      <option value="select">Select Faculty</option>
+                      {SchoolPrograms?.map((school, index) => (
+                        <option value={school.faculty} key={index}>
+                          {school.faculty}
+                        </option>
+                      ))}
+                    </Field>
+                  </div>
+                  <div className="mb-4">
+                    <Field
+                      type="text"
+                      id="department"
+                      name="department"
+                      as="select"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.department}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    >
+                      <option value="select">Select Department</option>
+                      {selectedFaculty &&
+                        facultyToDepartments[selectedFaculty]?.map(
+                          (department, index) => (
+                            <option value={department} key={index}>
+                              {department}
+                            </option>
+                          )
+                        )}
+                    </Field>
+                  </div>
                 </>
               )}
 
@@ -265,6 +251,7 @@ export default function AuthenticationPage() {
                   value={values.password}
                   placeholder="Enter Password"
                   label="Enter Password"
+                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 />
                 {values.password && (
                   <button
@@ -278,12 +265,15 @@ export default function AuthenticationPage() {
                 )}
               </div>
 
-              <div className="flex">
+              <div className="flex justify-between mt-4">
                 <button
                   type="button"
                   onClick={() => {
-                    setNewUser((prevAuth) => !prevAuth);
+                    setTimeout(() => {
+                      setNewUser((prevAuth) => !prevAuth);
+                    }, 500);
                   }}
+                  className="text-blue-600 hover:underline"
                 >
                   {newUser ? "Already have an account ?" : "New User ?"}
 
@@ -292,8 +282,12 @@ export default function AuthenticationPage() {
                   </span>
                 </button>
               </div>
-              <div>
-                <button disabled={isSubmitting} type="submit">
+              <div className="mt-6">
+                <button
+                  disabled={isSubmitting}
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                >
                   {newUser ? "Create Account" : "Login"}
                 </button>
               </div>

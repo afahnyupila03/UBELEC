@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { AppState } from "../../../Store";
 import { Avatar, Dropdown, Navbar } from "flowbite-react";
 
@@ -23,6 +23,9 @@ export default function NavbarComponent() {
   const role = user?.user.user_metadata.role;
   const navigate = useNavigate();
 
+  const firstName = user?.user.user_metadata.firstName;
+  const lastName = user?.user.user_metadata.lastName;
+
   const handleSignOut = () => {
     signOutUser();
     navigate(
@@ -33,8 +36,51 @@ export default function NavbarComponent() {
   };
 
   return (
-    <div className="bg-red-500">
-      <p className="font-medium text-4xl text-white">Hello world</p>
-    </div>
+    <Navbar fluid rounded>
+      <Navbar.Brand href="https://flowbite-react.com">
+        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
+          UBEVOTE
+        </span>
+      </Navbar.Brand>
+      <div className="flex md:order-2">
+        <Dropdown
+          arrowIcon={false}
+          inline
+          label={
+            <Avatar
+              alt="User settings"
+              img="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
+              rounded
+            />
+          }
+        >
+          <Dropdown.Header>
+            <span className="block text-sm">
+              {`${firstName} ${lastName}`}
+            </span>
+            <span className="block truncate text-sm font-medium">
+              {user?.user.email}
+            </span>
+          </Dropdown.Header>
+          <Dropdown.Divider />
+          <Dropdown.Item onClick={handleSignOut}>Sign out</Dropdown.Item>
+        </Dropdown>
+        <Navbar.Toggle />
+      </div>
+      <Navbar.Collapse>
+        {navigation(role)?.map((link, index) => (
+          <NavLink
+            key={index}
+            to={link.path}
+            className={({ isActive }) =>
+              isActive ? "text-blue-700" : "text-gray-900"
+            }
+            end
+          >
+            {link.link}
+          </NavLink>
+        ))}
+      </Navbar.Collapse>
+    </Navbar>
   );
 }

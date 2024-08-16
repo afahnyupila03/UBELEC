@@ -10,6 +10,8 @@ import { Positions, SchoolPrograms } from "../../Constants";
 import StudentVoteCard from "./Components/StudentVoteCard";
 import { fetchUserProfile } from "../../Services/UserService";
 
+import { Blockquote } from "flowbite-react";
+
 export const AdminRenderOfVotes = (props) => {
   return (
     <Fragment>
@@ -127,13 +129,17 @@ export default function VotesPage() {
 
       return (
         <div key={position}>
-          <h1>{position}</h1>
+          <Blockquote className="text-2xl my-4 py-2">{position}</Blockquote>
           {votePositions?.length > 0 ? (
-            votePositions.map((vote) => (
-              <StudentVoteCard key={vote.voteId} voteData={vote} />
-            ))
+            <div className="grid grid-cols-4 gap-4">
+              {votePositions.map((vote) => (
+                <StudentVoteCard key={vote.voteId} voteData={vote} />
+              ))}
+            </div>
           ) : (
-            <p>No candidates found for the position of {position}</p>
+            <Blockquote className="text-xl font-sans">
+              No candidates found for the position of {position}
+            </Blockquote>
           )}
         </div>
       );
@@ -165,5 +171,7 @@ export default function VotesPage() {
     }
   };
 
-  return <div>{renderVoteContent()}</div>;
+  return (
+    <div className="mx-auto my-10 px-10 container">{renderVoteContent()}</div>
+  );
 }

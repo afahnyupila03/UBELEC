@@ -414,7 +414,9 @@ export default function CandidatePage() {
     if (userRole === "student") {
       return (
         <div>
-          <h1>Vote Candidate by Position</h1>
+          <Blockquote className="font-sans my-4 py-2 text-2xl">
+            Vote Candidate by Position
+          </Blockquote>
           {renderStudentCandidateBySchoolProgram()}
         </div>
       );

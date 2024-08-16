@@ -30,9 +30,9 @@ export default function StudentCandidateCard({
           <p className="font-normal text-gray-700 dark:text-gray-400">
             {candidateDepartment}
           </p>
-          <p className="font-normal text-gray-700 dark:text-gray-400">
+          <Blockquote className="font-normal text-gray-700 dark:text-gray-400">
             {candidatePosition}
-          </p>
+          </Blockquote>
         </CardBody>
         <CardFooter>
           <Button

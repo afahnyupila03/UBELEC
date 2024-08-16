@@ -2,28 +2,10 @@ import { Field, Form, Formik } from "formik";
 import React, { useState } from "react";
 import { AppState } from "../../Store";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SchoolPrograms } from "./Components/Constants";
+import { SchoolPrograms } from "../../Constants/index";
 import supabase from "../../Configs/supabase";
 
-const signUpErrorMessage = ({ error }) => {
-  return (
-    <>
-      {alert(error.message)}
-      <p>{error.message}</p>
-      <p>Please try again</p>
-    </>
-  );
-};
-
-const SignInErrorMessage = ({ error }) => {
-  return (
-    <>
-      {alert(error.message)}
-      <p>Error signing into account</p>
-      <p>Please try again</p>
-    </>
-  );
-};
+import FormField from "../../Components/TextInput";
 
 export default function AuthenticationPage() {
   const { createUserHandler, signInUser, user } = AppState();
@@ -43,16 +25,15 @@ export default function AuthenticationPage() {
   const location = useLocation();
 
   const role =
-      location.pathname === "/admin/create-account-&-log-in"
-        ? "admin"
-        : "student";
-    const redirectTo =
-      role === "admin" ? "/admin/dashboard" : "/student/dashboard";
+    location.pathname === "/admin/create-account-&-log-in"
+      ? "admin"
+      : "student";
+  const redirectTo =
+    role === "admin" ? "/admin/dashboard" : "/student/dashboard";
 
   const createAccount = async (values, actions) => {
-    
     try {
-      const { user } = await createUserHandler(
+      const { user, error: createUserError } = await createUserHandler(
         values.email,
         values.password,
         values.firstName,
@@ -61,76 +42,72 @@ export default function AuthenticationPage() {
         redirectTo,
         values.phone
       );
+
+      if (createUserError || !user) {
+        throw new Error(createUserError?.message || "User creation failed");
+      }
+
+      const { id: userId } = user;
+
+      const studentData = {
+        user_id: userId,
+        first_name: values.firstName,
+        last_name: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        faculty_name: values.faculty,
+        department_name: values.department,
+      };
+
+      const adminData = {
+        admin_id: userId,
+        first_name: values.firstName,
+        last_name: values.lastName,
+        email: values.email,
+        phone: values.phone,
+        faculty_name: values.faculty,
+        department_name: values.department,
+      };
+
+      if (role === "admin") {
+        const { error: adminError } = await supabase
+          .from("ADMIN_TABLE")
+          .insert([adminData]);
+        if (adminError) {
+          throw new Error(
+            `Error writing to ADMIN_TABLE: ${adminError.message}`
+          );
+        }
+      } else {
+        const { error: userError } = await supabase
+          .from("USER_TABLE")
+          .insert([studentData]);
+
+        if (userError) {
+          throw new Error(`Error writing to USER_TABLE: ${userError.message}`);
+        }
+      }
+
       actions.resetForm({
         values: {
           email: "",
           firstName: "",
           lastName: "",
           password: "",
+          department: "",
+          faculty: "",
+          phone: "",
         },
       });
 
-      const { id } = user;
-      console.log("Authentication page user: ", user);
-
-      try {
-        const studentData = {
-          user_id: id,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          email: values.email,
-        };
-        const facultyInfor = {
-          faculty_name: values.faculty,
-        };
-        const departmentInfor = {
-          department_name: values.department,
-        };
-
-        if (role === "admin") {
-          const { error } = await supabase.from().insert();
-          if (error) {
-            console.error("Error writing to admin tables: ", error.message);
-            throw error.message;
-          } else {
-            const { error: userError } = await supabase
-              .from("USER_TABLE")
-              .insert(studentData);
-            const { error: facultyError } = await supabase
-              .from("FACULTY_TABLE")
-              .insert(facultyInfor);
-            const { error: departmentError } = await supabase
-              .from("DEPARTMENT_TABLE")
-              .insert(departmentInfor);
-            if (userError) {
-              console.error("Error writing to USER_TABLE: ", userError.message);
-            } else if (facultyError) {
-              console.error("Error writing to FACULTY_TABLE: ", facultyError);
-            } else if (departmentError) {
-              console.error(
-                "Error writing to DEPARTMENT_TABLE: ",
-                departmentError
-              );
-            }
-          }
-        }
-
-        alert(
-          "Success writing to USER_TABLE, FACULTY_TABLE and DEPARTMENT_TABLE "
-        );
-      } catch (error) {
-        console.error("Error adding to user table: ", error.message);
-        alert(error.message);
-        throw error;
-      }
-      console.log("submitted values: ", values);
-      alert("Success creating account");
+      alert("Account created successfully and data inserted into the database");
       navigate(redirectTo, { replace: true });
     } catch (error) {
-      console.error(error.message);
-      alert(error.message);
+      console.error("Error in createAccount:", error.message);
+      alert(`Error: ${error.message}`);
     }
   };
+
   const loginAccount = async (values, actions) => {
     try {
       await signInUser(values.email, values.password);
@@ -148,9 +125,11 @@ export default function AuthenticationPage() {
   };
 
   return (
-    <div>
-      <div>
-        <h1>{newUser ? "Create Account" : "Login"}</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md bg-white shadow-md rounded-lg p-8">
+        <h1 className="text-2xl font-semibold text-center mb-6">
+          {newUser ? "Create Account" : "Login"}
+        </h1>
         <Formik
           initialValues={
             newUser
@@ -161,7 +140,7 @@ export default function AuthenticationPage() {
                   lastName: "",
                   department: "",
                   faculty: selectedFaculty,
-                  phone: ""
+                  phone: "",
                 }
               : {
                   email: "",
@@ -172,7 +151,7 @@ export default function AuthenticationPage() {
         >
           {({ values, handleChange, handleBlur, isSubmitting }) => (
             <Form>
-              <Field
+              <FormField
                 type="email"
                 id="email"
                 name="email"
@@ -184,7 +163,7 @@ export default function AuthenticationPage() {
               />
               {newUser && (
                 <>
-                  <Field
+                  <FormField
                     type="text"
                     id="firstName"
                     name="firstName"
@@ -194,7 +173,7 @@ export default function AuthenticationPage() {
                     placeholder="Enter First Name"
                     label="Enter First Name"
                   />
-                  <Field
+                  <FormField
                     type="text"
                     id="lastName"
                     name="lastName"
@@ -204,7 +183,7 @@ export default function AuthenticationPage() {
                     placeholder="Enter Last Name"
                     label="Enter Last Name"
                   />
-                  <Field
+                  <FormField
                     type="tel"
                     id="phone"
                     name="phone"
@@ -214,45 +193,51 @@ export default function AuthenticationPage() {
                     placeholder="Enter Phone Number"
                     label="Enter Phone Number"
                   />
-                  <Field
-                    type="text"
-                    id="faculty"
-                    name="faculty"
-                    as="select"
-                    onChange={(e) => {
-                      const selected = e.target.value;
-                      handleChange(e); // This updates Formik's state
-                      setSelectedFaculty(selected); // This updates the local state for departments
-                    }}
-                    onBlur={handleBlur}
-                    value={values.faculty}
-                  >
-                    <option value="select">Select Faculty</option>
-                    {SchoolPrograms.map((school, index) => (
-                      <option value={school.faculty} key={index}>
-                        {school.faculty}
-                      </option>
-                    ))}
-                  </Field>
-                  <Field
-                    type="text"
-                    id="department"
-                    name="department"
-                    as="select"
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    value={values.department}
-                  >
-                    <option value="select">Select Department</option>
-                    {selectedFaculty &&
-                      facultyToDepartments[selectedFaculty].map(
-                        (department, index) => (
-                          <option value={department} key={index}>
-                            {department}
-                          </option>
-                        )
-                      )}
-                  </Field>
+                  <div className="mb-4">
+                    <Field
+                      type="text"
+                      id="faculty"
+                      name="faculty"
+                      as="select"
+                      onChange={(e) => {
+                        const selected = e.target.value;
+                        handleChange(e);
+                        setSelectedFaculty(selected);
+                      }}
+                      onBlur={handleBlur}
+                      value={values.faculty}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    >
+                      <option value="select">Select Faculty</option>
+                      {SchoolPrograms?.map((school, index) => (
+                        <option value={school.faculty} key={index}>
+                          {school.faculty}
+                        </option>
+                      ))}
+                    </Field>
+                  </div>
+                  <div className="mb-4">
+                    <Field
+                      type="text"
+                      id="department"
+                      name="department"
+                      as="select"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      value={values.department}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    >
+                      <option value="select">Select Department</option>
+                      {selectedFaculty &&
+                        facultyToDepartments[selectedFaculty]?.map(
+                          (department, index) => (
+                            <option value={department} key={index}>
+                              {department}
+                            </option>
+                          )
+                        )}
+                    </Field>
+                  </div>
                 </>
               )}
 
@@ -266,6 +251,7 @@ export default function AuthenticationPage() {
                   value={values.password}
                   placeholder="Enter Password"
                   label="Enter Password"
+                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 />
                 {values.password && (
                   <button
@@ -279,12 +265,15 @@ export default function AuthenticationPage() {
                 )}
               </div>
 
-              <div className="flex">
+              <div className="flex justify-between mt-4">
                 <button
                   type="button"
                   onClick={() => {
-                    setNewUser((prevAuth) => !prevAuth);
+                    setTimeout(() => {
+                      setNewUser((prevAuth) => !prevAuth);
+                    }, 500);
                   }}
+                  className="text-blue-600 hover:underline"
                 >
                   {newUser ? "Already have an account ?" : "New User ?"}
 
@@ -293,8 +282,12 @@ export default function AuthenticationPage() {
                   </span>
                 </button>
               </div>
-              <div>
-                <button disabled={isSubmitting} type="submit">
+              <div className="mt-6">
+                <button
+                  disabled={isSubmitting}
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+                >
                   {newUser ? "Create Account" : "Login"}
                 </button>
               </div>

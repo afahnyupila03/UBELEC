@@ -1,50 +1,40 @@
 import { Link, useNavigate } from "react-router-dom";
 import { AppState } from "../../../Store";
+import { Avatar, Dropdown, Navbar } from "flowbite-react";
+
+const navigation = (role) => [
+  {
+    path: `/${role}/dashboard`,
+    link: "Dashboard",
+  },
+  {
+    path: `/${role}/candidates`,
+    link: "Candidates",
+  },
+  {
+    path: `/${role}/votes`,
+    link: "Votes",
+  },
+];
 
 export default function NavbarComponent() {
   const { signOutUser, user } = AppState();
 
   const role = user?.user.user_metadata.role;
-  const redirectTo =
-    role === "student"
-      ? "/create-account-&-log-in"
-      : "/admin/create-account-&-log-in";
-
   const navigate = useNavigate();
 
+  const handleSignOut = () => {
+    signOutUser();
+    navigate(
+      role === "student"
+        ? "/create-account-&-log-in"
+        : "/admin/create-account-&-log-in"
+    );
+  };
+
   return (
-    <div>
-      <div>
-        <ul>
-          <li>
-            <Link to="/student/dashboard">Dashboard</Link>
-          </li>
-          <li>
-            <Link to="/candidates">Candidates</Link>
-          </li>
-          <li>
-            <Link to="/votes">Votes</Link>
-          </li>
-          <li>User role: {role}</li>
-          <li>
-            <button
-              onClick={async () => {
-                try {
-                  await signOutUser();
-                  navigate(redirectTo, { replace: true });
-                } catch (error) {
-                  console.error("Error logging out: , error.message");
-                  alert("Error logging out: ", error.message);
-                  throw error;
-                }
-              }}
-              type="button"
-            >
-              Log out
-            </button>
-          </li>
-        </ul>
-      </div>
+    <div className="bg-red-500">
+      <p className="font-medium text-4xl text-white">Hello world</p>
     </div>
   );
 }

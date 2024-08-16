@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useEffect, StrictMode } from "react";
-import "./App.css";
+
 import { useNavigate, useRoutes } from "react-router-dom";
 import { AppRoutes } from "./Routes";
 import NavbarComponent from "./Pages/Home/Layout/Navbar";
@@ -43,10 +43,8 @@ function App() {
     <Suspense fallback=<FALLBACK />>
       <QueryClientProvider client={new QueryClient()}>
         <StrictMode>
-          <div className="App">
-            <NavbarComponent />
-            {appNav}
-          </div>
+          <NavbarComponent />
+          {appNav}
         </StrictMode>
       </QueryClientProvider>
     </Suspense>

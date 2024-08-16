@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment, useState, useEffect } from "react";
 import { useQuery } from "react-query";
 import { AppState } from "../../Store";
 import {
@@ -6,16 +6,31 @@ import {
   fetchUserProfile,
 } from "../../Services/UserService";
 
+import { Blockquote, Spinner, Button, Card, Alert } from "flowbite-react";
+
 const DashboardPage = () => {
   const { user } = AppState();
+
+  const [showAlert, setShowAlert] = useState(true);
+
   const userId = user?.user.id;
+  const role = user?.user.user_metadata.role;
 
   const userRole = user?.user.user_metadata?.role;
+
+  useEffect(() => {
+    const hasVisited = localStorage.getItem("hasVisited");
+    if (!hasVisited) {
+      setShowAlert(true);
+      localStorage.setItem("hasVisited", "true");
+    }
+  }, []);
 
   const {
     data: profile,
     isLoading,
     error,
+    refetch,
   } = useQuery(
     ["profile", userId, userRole],
     () => {
@@ -28,7 +43,7 @@ const DashboardPage = () => {
       }
     },
     {
-      enabled: !!userId && !!userRole, // Ensure query is enabled only if userId and userRole are available
+      enabled: !!userId && !!userRole,
     }
   );
 
@@ -42,80 +57,143 @@ const DashboardPage = () => {
   console.log("test user id: ", userId);
   console.log("Test fetch profile details: ", profile);
 
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>Error loading profile: {error.message}</p>;
+  if (isLoading)
+    return (
+      <Spinner
+        className="mx-auto py-10 my-10 px-10 container flex justify-center"
+        aria-label={`Loading ${role} information`}
+      />
+    );
+  if (error)
+    return (
+      <Button
+        type="button"
+        onClick={() => refetch()}
+        className="mx-auto py-10 
+        my-10 px-10 container flex justify-center"
+        color="failure"
+      >
+        Error loading profile: {error.message}
+      </Button>
+    );
+
+  function formatCMRPhoneNumber(phoneNumber) {
+    let cleanedNumber = String(phoneNumber).replace(/[\s-()]/g, "");
+
+    if (cleanedNumber.startsWith("237") && !cleanedNumber.startsWith("+237")) {
+      return `+${cleanedNumber}`;
+    }
+
+    if (!cleanedNumber.startsWith("+237")) {
+      return `+237${cleanedNumber}`;
+    }
+
+    return cleanedNumber;
+  }
 
   const renderDashboardContent = () => {
     if (userRole === "student") {
       return (
-        <>
-          <div>
-            <h3>Student Information</h3>
-            <div>
-              <p>Account created on: {created_at}</p>
-              <p>Name: {name}</p>
-              <p>Email: {email}</p>
-              <p>Phone number: {phone}</p>
+        <Fragment>
+          <div className="my-4 py-2">
+            <Blockquote className="text-2xl">Student Information</Blockquote>
+            <div className="my-4 font-sans py-2">
+              <Card className="max-w-md">
+                <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                  <span>Name: </span>
+                  <span>{name}</span>
+                </h5>
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Email: </span>
+                  <span>{email}</span>
+                </p>
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Tel: </span>
+                  <span>{formatCMRPhoneNumber(phone)}</span>
+                </p>
+              </Card>
             </div>
           </div>
           <div>
-            <h3>School Program</h3>
-            <div>
-              <p>Faculty: {faculty}</p>
-              <p>Department: {department}</p>
+            <Blockquote className="text-2xl">School Program</Blockquote>
+            <div className="my-4 font-sans py-2">
+              <Card className="max-w-md">
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Faculty: </span>
+                  <span>{faculty}</span>
+                </p>
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Department: </span>
+                  <span>{department}</span>
+                </p>
+              </Card>
             </div>
           </div>
-        </>
+        </Fragment>
       );
     } else if (userRole === "admin") {
       return (
-        <>
+        <Fragment>
           <div>
-            <h3>Admin Information</h3>
-            <div>
-              <p>Account created on: {created_at}</p>
-              <p>Name: {name}</p>
-              <p>Email: {email}</p>
-              <p>Phone number: {phone}</p>
+            <Blockquote className="text-2xl">Admin Information</Blockquote>
+            <div className="my-4 font-sans py-2">
+              <Card className="max-w-md">
+                <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                  <span>Name: </span>
+                  <span>{name}</span>
+                </h5>
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Email: </span>
+                  <span>{email}</span>
+                </p>
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Tel: </span>
+                  <span>{formatCMRPhoneNumber(phone)}</span>
+                </p>
+              </Card>
             </div>
           </div>
           <div>
-            <h3>School Program</h3>
-            <div>
-              <p>Faculty: {faculty}</p>
-              <p>Department: {department}</p>
+            <Blockquote className="text-2xl">School Program</Blockquote>
+            <div className="my-4 font-sans py-2">
+              <Card className="max-w-md">
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Faculty: </span>
+                  <span>{faculty}</span>
+                </p>
+                <p className="font-normal text-gray-700 dark:text-gray-400">
+                  <span>Department: </span>
+                  <span>{department}</span>
+                </p>
+              </Card>
             </div>
           </div>
-
-          <div>
-            <h1>Modal section to add candidates to system</h1>
-          </div>
-        </>
+        </Fragment>
       );
     } else {
       return <p>Invalid role or profile data not available</p>;
     }
   };
 
+  const renderDashboardAlert = () => {
+    return (
+      <Alert color="failure" onDismiss={() => setShowAlert(false)}>
+        <Blockquote className="text-2xl text-failure">PLEASE NOTE.</Blockquote>
+        <p className="font-sans text-lg">
+          You are allowed to vote only once for a candidate in each position.
+          <br />
+          Once your vote is submitted, it cannot be changed, canceled, or
+          revoked.
+          <br />
+          Make sure to review your choices carefully before submitting.
+        </p>
+      </Alert>
+    );
+  };
+
   return (
-    <div>
-      <div>
-        <p>MODAL NOTICE</p>
-        <div>
-          <h2>PLEASE NOTE.</h2>
-        </div>
-        <div>
-          <p>
-            You are allowed to vote only once for a candidate in each position.
-            Once your vote is submitted, it cannot be changed, canceled, or
-            revoked. Make sure to review your choices carefully before
-            submitting.
-          </p>
-        </div>
-        <div>
-          <button type="button">Close</button>
-        </div>
-      </div>
+    <div className="mx-auto my-10 px-10 container">
+      {showAlert && renderDashboardAlert()}
 
       {renderDashboardContent()}
     </div>

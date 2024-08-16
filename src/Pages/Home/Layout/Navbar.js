@@ -37,7 +37,7 @@ export default function NavbarComponent() {
 
   return (
     <Navbar fluid rounded>
-      <Navbar.Brand href="https://flowbite-react.com">
+      <Navbar.Brand>
         <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">
           UBEVOTE
         </span>
@@ -48,8 +48,6 @@ export default function NavbarComponent() {
           inline
           label={
             <Avatar
-              alt="User settings"
-              img="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
               rounded
             />
           }
@@ -62,7 +60,6 @@ export default function NavbarComponent() {
               {user?.user.email}
             </span>
           </Dropdown.Header>
-          <Dropdown.Divider />
           <Dropdown.Item onClick={handleSignOut}>Sign out</Dropdown.Item>
         </Dropdown>
         <Navbar.Toggle />
@@ -73,9 +70,9 @@ export default function NavbarComponent() {
             key={index}
             to={link.path}
             className={({ isActive }) =>
-              isActive ? "text-blue-700" : "text-gray-900"
+              isActive ? "text-blue-700 text-lg" : "text-gray-900 text-lg"
             }
-            end
+            end 
           >
             {link.link}
           </NavLink>

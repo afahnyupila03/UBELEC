@@ -3,7 +3,7 @@ import { Field, Form, Formik } from "formik";
 import { AppState } from "../../Store";
 import supabase from "../../Configs/supabase";
 import { Fragment, useState } from "react";
-import { Positions, SchoolPrograms } from "../../Constants";
+import { Positions, SchoolPrograms } from "../../Constants/index";
 import { useQuery } from "react-query";
 import { fetchCandidateProfiles } from "../../Services/CandidateService";
 import { fetchUserProfile } from "../../Services/UserService";
@@ -41,7 +41,6 @@ export default function CandidatePage() {
     return acc;
   }, {});
 
-  const studentName = studentProfile?.name;
   const studentFaculty = studentProfile?.faculty;
   const studentDepartment = studentProfile?.department;
 

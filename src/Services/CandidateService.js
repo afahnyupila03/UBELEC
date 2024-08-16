@@ -6,8 +6,6 @@ export const fetchCandidateProfiles = async () => {
       .from("CANDIDATE_TABLE")
       .select("*");
 
-    console.log("raw table data: ", candidateProfiles);
-
     if (error) throw error;
 
     const candidates = [];

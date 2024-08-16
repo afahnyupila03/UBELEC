@@ -22,6 +22,9 @@ export default function NavbarComponent() {
           <li>
             <Link to="/candidates">Candidates</Link>
           </li>
+          <li>
+            <Link to="/votes">Votes</Link>
+          </li>
           <li>User role: {role}</li>
           <li>
             <button

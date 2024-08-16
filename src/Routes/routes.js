@@ -1,6 +1,7 @@
 import AuthenticationPage from "../Pages/Auth/Authentication";
 import CandidatePage from "../Pages/Candidates/CandidatesPage";
 import DashboardPage from "../Pages/Dashboard/Dashboard";
+import VotesPage from "../Pages/Votes/VotesPage";
 
 export const routes = [
   {
@@ -22,5 +23,9 @@ export const routes = [
   {
     path: "/candidates",
     element: <CandidatePage />,
+  },
+  {
+    path: "/votes",
+    element: <VotesPage />,
   },
 ];

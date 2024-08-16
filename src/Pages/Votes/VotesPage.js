@@ -10,36 +10,57 @@ import { Positions, SchoolPrograms } from "../../Constants";
 import StudentVoteCard from "./Components/StudentVoteCard";
 import { fetchUserProfile } from "../../Services/UserService";
 
+import { Blockquote, Select, Label, Spinner, Button } from "flowbite-react";
+
 export const AdminRenderOfVotes = (props) => {
   return (
     <Fragment>
-      <div>
-        <h1>View Votes by Positions</h1>
+      <div className="my-4 py-2">
+        <Blockquote>View Votes by Positions</Blockquote>
       </div>
-      <div>
-        <select value={props.filteredFaculty} onChange={props.facultyChange}>
-          <option value="">All Faculties</option>
-          {Object.keys(props.facultyToDepartments).map((faculty) => (
-            <option key={faculty} value={faculty}>
-              {faculty}
-            </option>
-          ))}
-        </select>
-        <select
-          value={props.filteredDepartment}
-          onChange={props.changeFilteredDepartment}
-          disabled={!props.filteredFaculty} // Disable if no faculty is selected
-        >
-          <option value="">All Departments</option>
-          {props.filteredFaculty &&
-            props.facultyToDepartments[props.filteredFaculty].map(
-              (department) => (
-                <option key={department} value={department}>
-                  {department}
-                </option>
-              )
-            )}
-        </select>
+      <div className="flex space-x-4">
+        <div className="max-w-sm">
+          <div className="mb-2-block">
+            <Label
+              htmlFor="faculty"
+              className="text-lg"
+              value="Filter faculty"
+            />
+          </div>
+          <Select value={props.filteredFaculty} onChange={props.facultyChange}>
+            <option value="">All Faculties</option>
+            {Object.keys(props.facultyToDepartments).map((faculty) => (
+              <option key={faculty} value={faculty}>
+                {faculty}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="max-w-sm">
+          <div className="mb-2-block">
+            <Label
+              htmlFor="department"
+              className="text-lg"
+              value="Filter department"
+            />
+          </div>
+          <Select
+            value={props.filteredDepartment}
+            onChange={props.changeFilteredDepartment}
+            disabled={!props.filteredFaculty} // Disable if no faculty is selected
+          >
+            <option value="">All Departments</option>
+            {props.filteredFaculty &&
+              props.facultyToDepartments[props.filteredFaculty].map(
+                (department) => (
+                  <option key={department} value={department}>
+                    {department}
+                  </option>
+                )
+              )}
+          </Select>
+        </div>
       </div>
 
       {props.Positions.map((position) => {
@@ -54,7 +75,7 @@ export const AdminRenderOfVotes = (props) => {
 
         return (
           <div key={position}>
-            <h1>{position}</h1>
+            <Blockquote className="text-2xl my-4 py-2">{position}</Blockquote>
             {votePositions?.length > 0 ? (
               votePositions.map((vote) => (
                 <div key={vote.candidateId} style={{ marginBottom: "20px" }}>
@@ -62,7 +83,9 @@ export const AdminRenderOfVotes = (props) => {
                 </div>
               ))
             ) : (
-              <p>No votes found for {position}</p>
+              <Blockquote className="text-lg">
+                No votes found for {position}
+              </Blockquote>
             )}
           </div>
         );
@@ -100,6 +123,8 @@ export default function VotesPage() {
     },
     { enabled: !!userId }
   );
+  const { data: adminVote } = useQuery("admin", () => AdminVotesServices());
+  console.log("vote page all votes: ", adminVote);
   const { data: studentProfile } = useQuery(
     ["student_profile", userId, userRole],
     () => {
@@ -113,8 +138,25 @@ export default function VotesPage() {
   const studentFaculty = studentProfile?.faculty;
   const studentDepartment = studentProfile?.department;
 
-  if (isLoading) return <p>Loading your votes...</p>;
-  if (error) return <p>Error loading your votes: {error.message}</p>;
+  if (isLoading)
+    return (
+      <Spinner
+        className="mx-auto py-10 my-10 px-10 container flex justify-center"
+        aria-label={`Loading vote information`}
+      />
+    );
+  if (error)
+    return (
+      <Button
+        type="button"
+        onClick={() => refetch()}
+        className="mx-auto py-10 
+        my-10 px-10 container flex justify-center"
+        color="failure"
+      >
+        Error loading profile: {error.message}
+      </Button>
+    );
 
   const renderStudentVoteBySchoolProgram = () => {
     return Positions.map((position) => {
@@ -127,13 +169,17 @@ export default function VotesPage() {
 
       return (
         <div key={position}>
-          <h1>{position}</h1>
+          <Blockquote className="text-2xl my-4 py-2">{position}</Blockquote>
           {votePositions?.length > 0 ? (
-            votePositions.map((vote) => (
-              <StudentVoteCard key={vote.voteId} voteData={vote} />
-            ))
+            <div className="grid grid-cols-4 gap-4">
+              {votePositions.map((vote) => (
+                <StudentVoteCard key={vote.voteId} voteData={vote} />
+              ))}
+            </div>
           ) : (
-            <p>No candidates found for the position of {position}</p>
+            <Blockquote className="text-xl font-sans">
+              No candidates found for the position of {position}
+            </Blockquote>
           )}
         </div>
       );
@@ -165,5 +211,7 @@ export default function VotesPage() {
     }
   };
 
-  return <div>{renderVoteContent()}</div>;
+  return (
+    <div className="mx-auto my-10 px-10 container">{renderVoteContent()}</div>
+  );
 }

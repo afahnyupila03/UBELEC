@@ -1,5 +1,5 @@
 /* eslint-disable no-lone-blocks */
-import { Field, Form, Formik } from "formik";
+import { Form, Formik } from "formik";
 import { AppState } from "../../Store";
 import supabase from "../../Configs/supabase";
 import { Fragment, useState } from "react";
@@ -9,6 +9,17 @@ import { fetchCandidateProfiles } from "../../Services/CandidateService";
 import { fetchUserProfile } from "../../Services/UserService";
 import StudentCandidateCard from "./Components/StudentCandidateCard";
 import AdminCandidateCard from "./Components/AdminCandidateCard";
+import FormField from "../../Components/TextInput";
+
+import {
+  Label,
+  Select,
+  Blockquote,
+  Button,
+  Modal,
+  ModalHeader,
+  ModalBody,
+} from "flowbite-react";
 
 export default function CandidatePage() {
   const { user } = AppState();
@@ -17,6 +28,12 @@ export default function CandidatePage() {
   const [filteredFaculty, setFilteredFaculty] = useState("");
   const [filteredDepartment, setFilteredDepartment] = useState("");
   const [votedPositions, setVotedPositions] = useState({});
+
+  const [openModal, setOpenModal] = useState(false);
+
+  function onCloseModal() {
+    setOpenModal(false);
+  }
 
   const userRole = user?.user.user_metadata.role;
   const userId = user?.user.id;
@@ -205,21 +222,25 @@ export default function CandidatePage() {
 
       return (
         <div key={position}>
-          <h1>{position}</h1>
+          <Blockquote className="text-xl font-sans">{position}</Blockquote>
           {candidatePositions?.length > 0 ? (
-            candidatePositions.map((candidate) => (
-              <StudentCandidateCard
-                key={candidate.candidateId}
-                voteHandler={() =>
-                  voteCandidateHandler(candidate.candidateId, position)
-                }
-                isVoted={votedPositions[position] === candidate.candidateId}
-                isDisabled={votedPositions[position] !== undefined}
-                candidateData={candidate}
-              />
-            ))
+            <div className="grid grid-cols-4 gap-4">
+              {candidatePositions.map((candidate) => (
+                <StudentCandidateCard
+                  key={candidate.candidateId}
+                  voteHandler={() =>
+                    voteCandidateHandler(candidate.candidateId, position)
+                  }
+                  isVoted={votedPositions[position] === candidate.candidateId}
+                  isDisabled={votedPositions[position] !== undefined}
+                  candidateData={candidate}
+                />
+              ))}
+            </div>
           ) : (
-            <p>No candidates found for the position of {position}</p>
+            <Blockquote className="text-xl font-sans py-2">
+              No candidates found for the position of {position}
+            </Blockquote>
           )}
         </div>
       );
@@ -228,11 +249,16 @@ export default function CandidatePage() {
 
   const renderCandidateModalForm = () => {
     return (
-      <Fragment>
-        <div>
-          <h2>Add user to voting based on faculty and department</h2>
-        </div>
-        <div>
+      <Modal show={openModal} size="md" onClose={onCloseModal} popup>
+        <ModalHeader className="flex justify-center">
+          <Blockquote
+            style={{ marginLeft: "7.5rem", marginRight: "6.5rem" }}
+            className="font-sans text-center"
+          >
+            Add Candidate
+          </Blockquote>
+        </ModalHeader>
+        <ModalBody>
           <Formik
             initialValues={{
               candidateName: "",
@@ -244,83 +270,69 @@ export default function CandidatePage() {
           >
             {({ values, handleChange, handleBlur, isSubmitting }) => (
               <Form>
-                <Field
+                <FormField
                   id="candidateName"
                   name="candidateName"
                   value={values.candidateName}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  autoComplete="false"
-                  label="Candidate Name"
                   placeholder="Candidate Name"
                 />
 
-                <Field
-                  type="text"
+                <FormField
                   id="candidateFaculty"
                   name="candidateFaculty"
                   as="select"
+                  value={values.candidateFaculty}
                   onChange={(e) => {
                     const selected = e.target.value;
-                    handleChange(e); // This updates Formik's state
-                    setSelectedFaculty(selected); // This updates the local state for departments
+                    handleChange(e);
+                    setSelectedFaculty(selected);
                   }}
                   onBlur={handleBlur}
-                  value={values.candidateFaculty}
-                >
-                  <option value="select">Select Candidate Faculty</option>
-                  {SchoolPrograms.map((school, index) => (
-                    <option value={school.faculty} key={index}>
-                      {school.faculty}
-                    </option>
-                  ))}
-                </Field>
+                  placeholder="Select Candidate Faculty"
+                  options={SchoolPrograms.map((school) => school.faculty)}
+                />
 
-                <Field
-                  type="text"
+                <FormField
                   id="candidateDepartment"
                   name="candidateDepartment"
                   as="select"
+                  value={values.candidateDepartment}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  value={values.candidateDepartment}
-                >
-                  <option value="select">Select Candidate Department</option>
-                  {selectedFaculty &&
-                    facultyToDepartments[selectedFaculty].map(
-                      (department, index) => (
-                        <option value={department} key={index}>
-                          {department}
-                        </option>
-                      )
-                    )}
-                </Field>
+                  placeholder="Select Candidate Department"
+                  options={
+                    selectedFaculty ? facultyToDepartments[selectedFaculty] : []
+                  }
+                />
 
-                <Field
-                  type="text"
+                <FormField
                   id="candidatePosition"
                   name="candidatePosition"
                   as="select"
+                  value={values.candidatePosition}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  value={values.candidatePosition}
-                >
-                  <option value="select">Select Candidate Position</option>
-                  {Positions.map((position, index) => (
-                    <option value={position} key={index}>
-                      {position}
-                    </option>
-                  ))}
-                </Field>
+                  placeholder="Select Candidate Position"
+                  options={Positions}
+                />
 
-                <div>
-                  <button type="submit">Add Candidate</button>
+                <div className="text-right">
+                  <Button
+                    disabled={isSubmitting}
+                    type="submit"
+                    className="mt-4"
+                    color="success"
+                  >
+                    {isSubmitting ? "Adding Candidate" : "Add Candidate"}
+                  </Button>
                 </div>
               </Form>
             )}
           </Formik>
-        </div>
-      </Fragment>
+        </ModalBody>
+      </Modal>
     );
   };
 
@@ -329,40 +341,61 @@ export default function CandidatePage() {
     return (
       <Fragment>
         <div>
-          <div>
-            <h1>View Candidates by Positions</h1>
+          <div className="my-4 py-2">
+            <Blockquote className="text-xl font-sans">
+              View Candidates by Positions
+            </Blockquote>
           </div>
-          <div>
-            {/* Faculty Filter Dropdown */}
-            <select
-              value={filteredFaculty}
-              onChange={(e) => {
-                setFilteredFaculty(e.target.value);
-                setFilteredDepartment(""); // Reset department when faculty changes
-              }}
-            >
-              <option value="">All Faculties</option>
-              {Object.keys(facultyToDepartments).map((faculty) => (
-                <option key={faculty} value={faculty}>
-                  {faculty}
-                </option>
-              ))}
-            </select>
 
-            {/* Department Filter Dropdown */}
-            <select
-              value={filteredDepartment}
-              onChange={(e) => setFilteredDepartment(e.target.value)}
-              disabled={!filteredFaculty} // Disable if no faculty is selected
-            >
-              <option value="">All Departments</option>
-              {filteredFaculty &&
-                facultyToDepartments[filteredFaculty].map((department) => (
-                  <option key={department} value={department}>
-                    {department}
+          <div className="flex space-x-4">
+            {/* Faculty Filter Dropdown */}
+            <div className="max-w-sm">
+              <div className="mb-2 block">
+                <Label
+                  htmlFor="faculty"
+                  className="text-lg"
+                  value="Filter faculty"
+                />
+              </div>
+              <Select
+                value={filteredFaculty}
+                onChange={(e) => {
+                  setFilteredFaculty(e.target.value);
+                  setFilteredDepartment(""); // Reset department when faculty changes
+                }}
+              >
+                <option value="">All Faculties</option>
+                {Object.keys(facultyToDepartments).map((faculty) => (
+                  <option key={faculty} value={faculty}>
+                    {faculty}
                   </option>
                 ))}
-            </select>
+              </Select>
+            </div>
+
+            {/* Department Filter Dropdown */}
+            <div className="max-w-sm">
+              <div className="mb-2 block">
+                <Label
+                  htmlFor="department"
+                  className="text-lg"
+                  value="Filter department"
+                />
+              </div>
+              <Select
+                value={filteredDepartment}
+                onChange={(e) => setFilteredDepartment(e.target.value)}
+                disabled={!filteredFaculty} // Disable if no faculty is selected
+              >
+                <option value="">All Departments</option>
+                {filteredFaculty &&
+                  facultyToDepartments[filteredFaculty].map((department) => (
+                    <option key={department} value={department}>
+                      {department}
+                    </option>
+                  ))}
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -378,12 +411,14 @@ export default function CandidatePage() {
 
           return (
             <div key={position}>
-              <h1>{position}</h1>
+              <Blockquote className="text-xl font-sans my-4 py-2">
+                {position}
+              </Blockquote>
 
               {/* Display Candidates */}
               {candidatePositions?.length > 0 ? (
-                candidatePositions.map((candidate) => (
-                  <div key={candidate.candidateId}>
+                <div className="grid grid-cols-4 gap-4">
+                  {candidatePositions.map((candidate) => (
                     <AdminCandidateCard
                       key={candidate.candidateId}
                       candidateData={candidate}
@@ -391,10 +426,12 @@ export default function CandidatePage() {
                         removeCandidateHandler(candidate.candidateId)
                       }
                     />
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
-                <p>No candidates found for {position}</p>
+                <Blockquote className="text-xl font-sans py-2">
+                  No candidates found for the position of {position}
+                </Blockquote>
               )}
             </div>
           );
@@ -407,14 +444,22 @@ export default function CandidatePage() {
     if (userRole === "student") {
       return (
         <div>
-          <h1>Vote Candidate by Position</h1>
+          <Blockquote className="font-sans my-4 py-2 text-2xl">
+            Vote Candidate by Position
+          </Blockquote>
           {renderStudentCandidateBySchoolProgram()}
         </div>
       );
     } else if (userRole === "admin") {
       return (
         <div>
-          {renderCandidateModalForm()}
+          {openModal && renderCandidateModalForm()}
+
+          <Button onClick={() => setOpenModal(true)} color="success">
+            <Blockquote className="text-white font-sans">
+              Add Candidate
+            </Blockquote>
+          </Button>
 
           {renderCandidatesForAdminView()}
         </div>
@@ -422,5 +467,9 @@ export default function CandidatePage() {
     }
   };
 
-  return <div>{renderCandidateContent()}</div>;
+  return (
+    <div className="mx-auto my-10 px-10 container">
+      {renderCandidateContent()}
+    </div>
+  );
 }

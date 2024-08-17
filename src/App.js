@@ -26,7 +26,7 @@ function App() {
   const { user } = AppState();
   const userRole = user?.user.user_metadata.role;
 
-  /* useEffect(() => {
+  useEffect(() => {
     if (user !== null) {
       if (userRole === "student") {
         setCheckUser(false);
@@ -39,7 +39,7 @@ function App() {
       setCheckUser(false);
       navigate("/create-account-&-log-in", { replace: true });
     }
-  }, [user, userRole, navigate]); */
+  }, [user, userRole, navigate]);
 
   return (
     <Suspense fallback=<FALLBACK />>

@@ -100,6 +100,7 @@ export const AdminVotesServices = async () => {
       };
     });
 
+    console.log("Admin votes service: ", allVotes);
     return allVotes;
   } catch (error) {
     console.error("Error fetching all votes: ", error);

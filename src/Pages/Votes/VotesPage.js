@@ -77,11 +77,11 @@ export const AdminRenderOfVotes = (props) => {
           <div key={position}>
             <Blockquote className="text-2xl my-4 py-2">{position}</Blockquote>
             {votePositions?.length > 0 ? (
-              votePositions.map((vote) => (
-                <div key={vote.candidateId} style={{ marginBottom: "20px" }}>
-                  <AdminVoteCard voteData={vote} />
-                </div>
-              ))
+              <div className="grid grid-cols-4 gap-4">
+                {votePositions.map((vote) => (
+                  <AdminVoteCard key={vote.voteId} voteData={vote} />
+                ))}
+              </div>
             ) : (
               <Blockquote className="text-lg">
                 No votes found for {position}
@@ -123,8 +123,7 @@ export default function VotesPage() {
     },
     { enabled: !!userId }
   );
-  const { data: adminVote } = useQuery("admin", () => AdminVotesServices());
-  console.log("vote page all votes: ", adminVote);
+
   const { data: studentProfile } = useQuery(
     ["student_profile", userId, userRole],
     () => {
@@ -202,6 +201,7 @@ export default function VotesPage() {
           changeFilteredDepartment={(e) =>
             setFilteredDepartment(e.target.value)
           }
+          
           disabled={!filteredFaculty}
           filteredFaculty={filteredFaculty}
           Positions={Positions}

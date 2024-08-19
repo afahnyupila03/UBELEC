@@ -1,5 +1,4 @@
 import React, { Suspense, useState, useEffect, StrictMode } from "react";
-
 import { useNavigate, useRoutes } from "react-router-dom";
 import { AppRoutes } from "./Routes";
 import NavbarComponent from "./Pages/Home/Layout/Navbar";
@@ -12,7 +11,7 @@ const FALLBACK = () => {
     <div className="flex justify-center items-center">
       <Spinner
         className="mx-auto py-10 my-10 px-10 container flex justify-center"
-        aria-label={`Loading vote information`}
+        aria-label="Loading vote information"
       />
     </div>
   );
@@ -21,28 +20,25 @@ const FALLBACK = () => {
 function App() {
   const appNav = useRoutes(AppRoutes);
   const navigate = useNavigate();
-  const [checkUser, setCheckUser] = useState(true);
-
   const { user } = AppState();
   const userRole = user?.user.user_metadata.role;
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
-    if (user !== null) {
-      if (userRole === "student") {
-        setCheckUser(false);
+    if (initialLoad) {
+      if (user === null) {
+        navigate("/create-account-&-log-in", { replace: true });
+      } else if (userRole === "student") {
         navigate("/student/dashboard", { replace: true });
-      } else {
-        setCheckUser(false);
+      } else if (userRole === "admin") {
         navigate("/admin/dashboard", { replace: true });
       }
-    } else {
-      setCheckUser(false);
-      navigate("/create-account-&-log-in", { replace: true });
+      setInitialLoad(false); // Disable the initial load flag after the first redirection
     }
-  }, [user, userRole, navigate]);
+  }, [user, userRole, navigate, initialLoad]);
 
   return (
-    <Suspense fallback=<FALLBACK />>
+    <Suspense fallback={<FALLBACK />}>
       <QueryClientProvider client={new QueryClient()}>
         <StrictMode>
           <NavbarComponent />

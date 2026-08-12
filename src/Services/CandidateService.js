@@ -22,7 +22,6 @@ export const fetchCandidateProfiles = async () => {
     }
     return candidates;
   } catch (error) {
-    console.error("Error fetching admin profile: ", error);
     throw new Error(`Failed to fetch admin profile: ${error.message}`);
   }
 };

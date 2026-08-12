@@ -36,7 +36,6 @@ export const fetchAdminProfiles = async (adminId) => {
 
     return adminProfile;
   } catch (error) {
-    console.error("Error fetching admin profile: ", error);
     throw new Error(`Failed to fetch admin profile: ${error.message}`);
   }
 };
@@ -75,7 +74,6 @@ export const fetchUserProfile = async (userId) => {
 
     return userProfile;
   } catch (error) {
-    console.error("Error fetching user profile: ", error);
     throw error;
   }
 };

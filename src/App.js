@@ -21,7 +21,7 @@ function App() {
   const appNav = useRoutes(AppRoutes);
   const navigate = useNavigate();
   const { user } = AppState();
-  const userRole = user?.user.user_metadata.role;
+  const userRole = user?.user?.user_metadata.role;
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {

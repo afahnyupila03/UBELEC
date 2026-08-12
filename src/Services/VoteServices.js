@@ -21,7 +21,6 @@ export const StudentVotesServices = async (userId) => {
       .eq("user_id", userId);
 
     if (studentError) {
-      console.error(`Error fetching student votes: ${studentError.message}`);
       throw new Error(`Error fetching student votes: ${studentError.message}`);
     }
 
@@ -38,7 +37,6 @@ export const StudentVotesServices = async (userId) => {
 
     return studentVote;
   } catch (error) {
-    console.error("Error fetching student votes: ", error);
     throw new Error("Error fetching student votes: ", error);
   }
 };
@@ -62,7 +60,6 @@ export const AdminVotesServices = async () => {
         `);
 
     if (adminError) {
-      console.error(`Error fetching all votes: ${adminError.message}`);
       throw new Error(`Error fetching all votes: ${adminError.message}`);
     }
 
@@ -100,10 +97,8 @@ export const AdminVotesServices = async () => {
       };
     });
 
-    console.log("Admin votes service: ", allVotes);
     return allVotes;
   } catch (error) {
-    console.error("Error fetching all votes: ", error);
     throw new Error("Error fetching all votes: ", error);
   }
 };
